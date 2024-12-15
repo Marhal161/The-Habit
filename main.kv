@@ -1,0 +1,141 @@
+MDFloatLayout:
+    MDIconButton:
+        icon: 'menu'
+        pos_hint: {'top': 1, 'left': 1}
+        on_release: app.show_menu()
+
+    MDLabel:
+        id: task_label
+        halign: 'center'
+        markup: True
+        text: "[u][size=48][b]My habits[/b][/size][/u]"
+        pos_hint: {'top': 1}
+        size_hint_y: None
+        height: '100dp'
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: '20dp'
+        padding: '20dp'
+
+        Widget:
+            size_hint_y: None
+            height: '100dp'
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: '300dp'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            FitImage:
+                id: selected_task_image
+                source: ''
+                size_hint: None, None
+                size: '200dp', '200dp'
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            MDLabel:
+                id: selected_task_label
+                halign: 'center'
+                markup: True
+                text: ""
+                size_hint_y: None
+                height: '100dp'
+
+            MDLabel:
+                id: tracked_count_label
+                halign: 'center'
+                markup: True
+                text: "Tracked: 0"
+                size_hint_y: None
+                height: '50dp'
+                opacity: 0  # Hide the label initially
+
+        Widget:
+            size_hint_y: None
+            height: '100dp'
+
+    ScrollView:
+        pos_hint: {'center_y': .5, 'center_x': .5}
+        size_hint: .9, .8
+
+        MDList:
+            id: container
+
+    BoxLayout:
+        size_hint_y: None
+        height: '50dp'
+        padding: '10dp'
+
+        AnchorLayout:
+            anchor_x: 'left'
+            anchor_y: 'bottom'
+
+            MDFloatingActionButton:
+                id: track_button
+                icon: 'check'
+                on_release: app.track_task()
+                disabled: True
+                opacity: 0  # Hide the button initially
+                md_bg_color: app.theme_cls.primary_color
+
+        AnchorLayout:
+            anchor_x: 'right'
+            anchor_y: 'bottom'
+
+            MDFloatingActionButton:
+                icon: 'plus-thick'
+                on_release: app.show_task_dialog()
+                elevation_normal: 12
+
+<DialogContent>:
+    orientation: "vertical"
+    spacing: "10dp"
+    size_hint: 1, None
+    height: "130dp"
+
+    GridLayout:
+        rows: 1
+
+        MDTextField:
+            id: task_text
+            hint_text: "Add habit..."
+            pos_hint: {"center_y": .4}
+            max_text_length: 50
+            on_text_validate: (app.add_task(task_text, date_text.text), app.close_dialog())
+
+        MDIconButton:
+            icon: 'calendar'
+            on_release: root.show_date_picker()
+            padding: '10dp'
+
+    MDLabel:
+        spacing: '10dp'
+        id: date_text
+
+    BoxLayout:
+        orientation: 'horizontal'
+
+        MDRaisedButton:
+            text: "SAVE"
+            on_release: (app.add_task(task_text, date_text.text), app.close_dialog())
+        MDFlatButton:
+            text: 'CANCEL'
+            on_release: app.close_dialog()
+
+<ListItemWithCheckbox>:
+    id: the_list_item
+    markup: True
+
+    LeftCheckbox:
+        id: check
+        on_release:
+            root.mark(check, the_list_item)
+
+    IconRightWidget:
+        icon: 'trash-can-outline'
+        theme_text_color: "Custom"
+        text_color: 1, 0, 0, 1
+        on_release:
+            root.delete_item(the_list_item)
