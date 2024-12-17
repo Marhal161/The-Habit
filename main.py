@@ -13,6 +13,12 @@ from kivymd.uix.list import MDList
 from kivymd.uix.list import IconRightWidget
 from kivymd.uix.card import MDCard
 from kivymd.uix.fitimage import FitImage
+from kivy.uix.widget import Widget
+from kivy.graphics import Color, Ellipse
+from random import randint, uniform
+from kivy.clock import Clock
+from kivy.properties import ListProperty
+from math import sin, cos
 
 if platform == "android":
     from android.permissions import request_permissions, Permission
@@ -104,6 +110,61 @@ class ListItemWithCheckbox(TwoLineAvatarIconListItem):
 class LeftCheckbox(ILeftBodyTouch, MDCheckbox):
     '''Custom left container'''
 
+class ParticleMesh(Widget):
+    points = ListProperty()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.direction = []
+        self.sizes = []
+        self.colors = []
+        self.point_number = 50
+        self.bind(size=self.on_size)
+
+    def on_size(self, *args):
+        self.plot_points()
+        Clock.schedule_interval(self.update_positions, 1 / 60)
+
+    def plot_points(self):
+        self.points = []
+        self.direction = []
+        self.sizes = []
+        self.colors = []
+        for _ in range(self.point_number):
+            x = randint(0, self.width)
+            y = randint(0, self.height)
+            self.points.extend([x, y])
+            self.direction.append(randint(0, 359))
+            self.sizes.append(randint(5, 20))
+            self.colors.append((uniform(0, 1), uniform(0, 1), uniform(0, 1), 1))
+
+    def update_positions(self, *args):
+        step = 1
+        for i, j in zip(range(0, len(self.points), 2), range(len(self.direction))):
+            theta = self.direction[j]
+            self.points[i] += step * cos(theta)
+            self.points[i + 1] += step * sin(theta)
+
+            if self.off_screen(self.points[i], self.points[i + 1]):
+                self.direction[j] = 90 + self.direction[j]
+
+        self.draw_circles()
+
+    def draw_circles(self):
+        self.canvas.after.clear()
+        with self.canvas.after:
+            for i in range(0, len(self.points), 2):
+                Color(rgba=self.colors[i // 2])
+                Ellipse(pos=(self.points[i] - self.sizes[i // 2] / 2, self.points[i + 1] - self.sizes[i // 2] / 2),
+                        size=(self.sizes[i // 2], self.sizes[i // 2]))
+
+    @staticmethod
+    def distance_between_points(x1, y1, x2, y2):
+        return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+    def off_screen(self, x, y):
+        return x < -5 or x > self.width + 5 or y < -5 or y > self.height + 5
+
 class MainApp(MDApp):
     task_list_dialog = None
     menu_dialog = None
@@ -115,6 +176,10 @@ class MainApp(MDApp):
         # Setting theme to my favorite theme
         self.theme_cls.primary_palette = "DeepPurple"
         return self.root
+
+    def on_start(self):
+        # Start the particle animation
+        self.root.ids.particle_mesh.on_size()
 
     def show_task_dialog(self):
         if not self.task_list_dialog:
@@ -162,10 +227,6 @@ class MainApp(MDApp):
         if self.menu_dialog:
             self.menu_dialog.dismiss()
 
-    def on_start(self):
-        """Do not load tasks on the main screen"""
-        pass
-
     def close_dialog(self, *args):
         self.task_list_dialog.dismiss()
 
@@ -184,6 +245,8 @@ class MainApp(MDApp):
         self.root.ids.selected_task_image.source = random_image  # Update the image source
         self.root.ids.track_button.disabled = False
         self.root.ids.track_button.opacity = 1  # Make the button visible
+        self.root.ids.reset_button.disabled = False
+        self.root.ids.reset_button.opacity = 1  # Make the button visible
         self.root.ids.tracked_count_label.opacity = 1  # Make the label visible
         self.tracked_count = db.get_tracked_count(task[0])
         self.root.ids.tracked_count_label.text = f"Tracked: {self.tracked_count}"
@@ -191,6 +254,12 @@ class MainApp(MDApp):
     def track_task(self):
         if self.selected_task:
             db.track_task(self.selected_task[0])
+            self.tracked_count = db.get_tracked_count(self.selected_task[0])
+            self.root.ids.tracked_count_label.text = f"Tracked: {self.tracked_count}"
+
+    def reset_task(self):
+        if self.selected_task:
+            db.reset_task(self.selected_task[0])
             self.tracked_count = db.get_tracked_count(self.selected_task[0])
             self.root.ids.tracked_count_label.text = f"Tracked: {self.tracked_count}"
 

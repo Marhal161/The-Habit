@@ -58,3 +58,7 @@ class Database:
         with self.conn:
             cursor = self.conn.execute("SELECT COUNT(*) FROM tracked_habits WHERE habit_id = ?", (task_id,))
             return cursor.fetchone()[0]
+
+    def reset_task(self, task_id):
+        with self.conn:
+            self.conn.execute("DELETE FROM tracked_habits WHERE habit_id = ?", (task_id,))

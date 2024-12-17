@@ -1,4 +1,13 @@
 MDFloatLayout:
+    ParticleMesh:
+        id: particle_mesh
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
     MDIconButton:
         icon: 'menu'
         pos_hint: {'top': 1, 'left': 1}
@@ -70,6 +79,18 @@ MDFloatLayout:
 
         AnchorLayout:
             anchor_x: 'left'
+            anchor_y: 'bottom'
+
+            MDFloatingActionButton:
+                id: reset_button
+                icon: 'close'
+                on_release: app.reset_task()
+                disabled: True
+                opacity: 0  # Hide the button initially
+                md_bg_color: app.theme_cls.error_color
+
+        AnchorLayout:
+            anchor_x: 'center'
             anchor_y: 'bottom'
 
             MDFloatingActionButton:
